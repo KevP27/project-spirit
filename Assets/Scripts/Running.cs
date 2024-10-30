@@ -5,16 +5,15 @@ using UnityEngine;
 public class Running : MonoBehaviour
 {
     public Animator animator;
-
-    //private bool isScoped = false;
-    //private bool isFlipped = false;
-    private bool isRunning = false;
-
-
     public Transform groundCheck;
+    public LayerMask groundMask; // Assign this in the Inspector for ground detection
+    public float groundDistance = 0.4f; // Radius for checking if on ground
 
     private bool isMoving;
+    private bool isRunning = false;
     private bool inAir;
+    //private bool isScoped = false;
+    //private bool isFlipped = false;
     //public GameObject ScopeOverlay;
     //public GameObject weaponCamera;
     //public Camera mainCamera;
@@ -24,58 +23,40 @@ public class Running : MonoBehaviour
 
     void WeaponRunning()
     {
-        if (isMoving)
+        if (isMoving && !inAir && Input.GetKey(KeyCode.LeftShift))
         {
-            if (Input.GetKeyDown(KeyCode.LeftShift))
-            {
-                isRunning = !isRunning;
-
-                animator.SetBool("Running", isRunning);
-            }
-            if (Input.GetKeyUp(KeyCode.LeftShift))
-            {
-                isRunning = false;
-
-                animator.SetBool("Running", isRunning);
-            }
+            // Start or keep running if moving on the ground and holding shift
+            isRunning = true;
+            animator.SetBool("Running", isRunning);
         }
-
-        if (inAir)
+        else
         {
-            if (Input.GetKey("left shift"))
-            {
-                isRunning = false;
-
-                animator.SetBool("Running", isRunning);
-            }
+            // Stop running if in the air or not holding shift
+            isRunning = false;
+            animator.SetBool("Running", isRunning);
         }
     }
 
     void Update()
     {
-        float inputX = Input.GetAxis("Horizontal"); //Keyboard input to determine if player is moving
+        // Check for movement input
+        float inputX = Input.GetAxis("Horizontal");
         float inputY = Input.GetAxis("Vertical");
 
-        if (inputX != 0 || inputY != 0)
-        {
-            isMoving = true;
-        }
-        else if (inputX == 0 && inputY == 0)
-        {
-            isMoving = false;
-        }
+        isMoving = inputX != 0 || inputY != 0;
 
-        if(groundCheck.position.y > 1f)
-        {
-            inAir = true;
-        }
+        // Check if player is in the air
+        bool wasInAir = inAir;
+        inAir = !Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-        if (groundCheck.position.y < 1f)
+        // If player has just landed and is moving with shift held, resume running
+        if (wasInAir && !inAir && isMoving && Input.GetKey(KeyCode.LeftShift))
         {
-            inAir = false;
+            isRunning = true;
+            animator.SetBool("Running", isRunning);
         }
 
-
+        // Update the running animation state
         WeaponRunning();
         /*
         if (Input.GetButtonDown("Fire2"))

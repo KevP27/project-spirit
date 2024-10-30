@@ -8,31 +8,36 @@ public class CamAnimation : MonoBehaviour
 
     //public CharacterController playerController;
     public Transform groundCheck;
-    public Animation anim; //Empty GameObject's animation component
+    public Collider playerCollider;
+    public Animation anim; 
     private bool isMoving;
+    private bool onGround;
 
     private bool left;
     private bool right;
 
+    public LayerMask groundMask; 
+    public float groundDistance = 0.4f; 
+
     void CameraAnimations()
     {
-        if (groundCheck.position.y < 1.5f)
+        if (onGround) // Check if player is on the ground
         {
-            if (isMoving == true)
+            if (isMoving)
             {
                 if (Input.GetKey("left shift"))
                 {
-                    if (left == true)
+                    if (left)
                     {
                         if (!anim.isPlaying)
-                        {//Waits until no animation is playing to play the next
+                        {
                             anim.Play("Head Bob Left Run");
                             fastStep.Play();
                             left = false;
                             right = true;
                         }
                     }
-                    if (right == true)
+                    if (right)
                     {
                         if (!anim.isPlaying)
                         {
@@ -45,17 +50,17 @@ public class CamAnimation : MonoBehaviour
                 }
                 else
                 {
-                    if (left == true)
+                    if (left)
                     {
                         if (!anim.isPlaying)
-                        {//Waits until no animation is playing to play the next
+                        {
                             anim.Play("Head Bob Left");
                             footstep.Play();
                             left = false;
                             right = true;
                         }
                     }
-                    if (right == true)
+                    if (right)
                     {
                         if (!anim.isPlaying)
                         {
@@ -70,28 +75,22 @@ public class CamAnimation : MonoBehaviour
         }
     }
 
-
     void Start()
-    { //First step in a new scene/life/etc. will be "walkLeft"
+    {
         left = true;
         right = false;
     }
 
     void Update()
     {
-        float inputX = Input.GetAxis("Horizontal"); //Keyboard input to determine if player is moving
+        float inputX = Input.GetAxis("Horizontal");
         float inputY = Input.GetAxis("Vertical");
 
-        if (inputX != 0 || inputY != 0)
-        {
-            isMoving = true;
-        }
-        else if (inputX == 0 && inputY == 0)
-        {
-            isMoving = false;
-        }
+        isMoving = inputX != 0 || inputY != 0;
+
+        // Check if the player is on the ground
+        onGround = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         CameraAnimations();
-
     }
 }

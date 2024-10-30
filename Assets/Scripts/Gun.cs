@@ -31,21 +31,28 @@ public class Gun : MonoBehaviour
 
     public Text ammoText;
 
+    public Transform groundCheck;
+    public LayerMask groundMask; // Assign this in the Inspector for ground detection
+    public float groundDistance = 0.4f; // Radius for ground detection
+    private bool isGrounded;
+
     void Start()
     {
         currentAmmo = maxAmmo;
         ammoText.text = currentAmmo.ToString();
     }
 
-    void OnEnable ()
+    void OnEnable()
     {
         isReloading = false;
         animator.SetBool("Reloading", false);
     }
 
-    // Update is called once per frame
     void Update()
     {
+        // Check if the player is grounded
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
         if (isReloading)
         {
             return;
@@ -53,11 +60,14 @@ public class Gun : MonoBehaviour
 
         if (currentAmmo <= 0)
         {
-            StartCoroutine(Reload());
+            if (isGrounded) // Only reload if on the ground
+            {
+                StartCoroutine(Reload());
+            }
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo)
+        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo && isGrounded)
         {
             StartCoroutine(Reload());
         }
@@ -76,48 +86,46 @@ public class Gun : MonoBehaviour
 
             Shoot();
         }
-        
+
         if (Input.GetMouseButtonUp(0))
         {
             isRecoil = false;
-
             animator.SetBool("Recoil", isRecoil);
 
             FindObjectOfType<CamRecoil>().notCamRecoil();
         }
     }
 
-    IEnumerator Reload ()
+    IEnumerator Reload()
     {
-        isRecoil = false;
-
-        animator.SetBool("Recoil", isRecoil);
-
+        // Stop running if reloading starts
+        isRunning = false;
         animator.SetBool("Running", isRunning);
 
-        FindObjectOfType<CamRecoil>().notCamRecoil();
+        // Reset recoil state and stop recoil animation
+        isRecoil = false;
+        animator.SetBool("Recoil", isRecoil);
 
-        reload.Play();
-
+        // Trigger reloading animation
         isReloading = true;
+        reload.Play();
         Debug.Log("Reloading...");
-
         animator.SetBool("Reloading", true);
 
+        // Wait for reload time to complete
         yield return new WaitForSeconds(reloadTime - .25f);
         animator.SetBool("Reloading", false);
         yield return new WaitForSeconds(.25f);
 
+        // Reset ammo count and isReloading flag
         currentAmmo = maxAmmo;
         isReloading = false;
-
         ammoText.text = currentAmmo.ToString();
     }
 
     void Shoot()
     {
         isRecoil = !isRecoil;
-
         animator.SetBool("Recoil", isRecoil);
 
         dustExplosion.Play();
@@ -126,15 +134,7 @@ public class Gun : MonoBehaviour
         gunSound.Play();
 
         currentAmmo--;
-
         ammoText.text = currentAmmo.ToString();
-
-        /*
-        if (currentAmmo == 0)
-        {
-            ammoText.GetComponent<Text>().color = Color.red;
-        }
-        */
 
         RaycastHit hit;
         if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, range))

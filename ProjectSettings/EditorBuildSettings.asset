@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Intro Scenes/Start Menu.unity
     guid: 4f2b688ad4e2a244e9c43679142a60f3
   - enabled: 1
-    path: Assets/Scenes/Level 0/Introduction.unity
+    path: Assets/Scenes/Level 0/The Room.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
     path: Assets/Scenes/Level 1/The Field.unity
