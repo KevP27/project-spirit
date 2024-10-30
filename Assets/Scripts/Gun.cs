@@ -28,6 +28,7 @@ public class Gun : MonoBehaviour
     public GameObject impactEffect;
 
     private float nextTimeToFire = 0f;
+    private Coroutine resumeRunningCoroutine;
 
     public Text ammoText;
 
@@ -72,27 +73,41 @@ public class Gun : MonoBehaviour
             StartCoroutine(Reload());
         }
 
+        // Handle firing
         if (Input.GetMouseButtonDown(0) && Time.time >= nextTimeToFire)
         {
             nextTimeToFire = Time.time + 1f / fireRate;
 
-            if (Input.GetKey("left shift"))
+            // Stop running animation immediately upon firing
+            if (isRunning)
             {
-                isRunning = false;
-                animator.SetBool("Running", isRunning);
+                StopRunning();
             }
 
-            FindObjectOfType<CamRecoil>().camRecoil();
+            // Reset and restart coroutine to resume running after delay
+            if (resumeRunningCoroutine != null)
+            {
+                StopCoroutine(resumeRunningCoroutine);
+            }
+            resumeRunningCoroutine = StartCoroutine(ResumeRunningAfterDelay(0.5f));
 
             Shoot();
         }
 
+        // Release recoil when firing stops
         if (Input.GetMouseButtonUp(0))
         {
             isRecoil = false;
             animator.SetBool("Recoil", isRecoil);
 
             FindObjectOfType<CamRecoil>().notCamRecoil();
+        }
+
+        // Running animation should only play if no firing and shift is held
+        if (Input.GetKey("left shift") && !Input.GetMouseButton(0) && !isRunning && resumeRunningCoroutine == null)
+        {
+            isRunning = true;
+            animator.SetBool("Running", true);
         }
     }
 
@@ -125,6 +140,10 @@ public class Gun : MonoBehaviour
 
     void Shoot()
     {
+        // Ensure running is off during shooting
+        isRunning = false;
+        animator.SetBool("Running", isRunning);
+
         isRecoil = !isRecoil;
         animator.SetBool("Recoil", isRecoil);
 
@@ -155,5 +174,27 @@ public class Gun : MonoBehaviour
             GameObject impactGO = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
             Destroy(impactGO, 2f);
         }
+    }
+
+
+    void StopRunning()
+    {
+        isRunning = false;
+        animator.SetBool("Running", isRunning);
+    }
+
+    IEnumerator ResumeRunningAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Only resume running if left shift is still pressed and no shooting
+        if (Input.GetKey("left shift") && !Input.GetMouseButton(0))
+        {
+            isRunning = true;
+            animator.SetBool("Running", true);
+        }
+
+        // Set coroutine to null so Update can re-enable running manually if needed
+        resumeRunningCoroutine = null;
     }
 }
