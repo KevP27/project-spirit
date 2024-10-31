@@ -63,29 +63,6 @@ public class PlayerMovement : MonoBehaviour
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        
-        if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-            if (counter != 1)
-            {
-                jumpHeight = 5f;
-                gravity = -20f;
-                counter++;
-            }
-
-            else
-            {
-                jumpHeight = 3f;
-                gravity = -50f;
-                counter = 0;
-            }
-
-            if (Input.GetButtonDown("Jump") && isGrounded)
-            {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            }
-        }
-
         velocity.y += gravity * Time.deltaTime;
 
         controller.Move(velocity * Time.deltaTime);
